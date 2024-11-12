@@ -9,6 +9,8 @@ var processRouter = require('./routes/process');
 
 var app = express();
 
+app.timeout = 300000;
+
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');

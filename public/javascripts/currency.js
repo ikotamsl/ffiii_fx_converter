@@ -1,34 +1,48 @@
 const https = require("https");
 
-
-const currencyExchange = (from, to) => {
+const currencyExchange = async (from, to) => {
   if (!process.env.EXCHANGE_API_ENABLED) {
-    console.log("Exchange API is not enabled, conversion should be done manually");
+    console.log(
+      "Exchange API is not enabled, conversion should be done manually"
+    );
     return null;
   }
-    
 
-  const req = https.request(
-    {
-      hostname: `v6.exchangerate-api.com/v6`,
-      path: `/${process.env.EXCHANGE_API_KEY}/pair/${from}/${to}`,
+  try {
+    const options = {
+      hostname: `v6.exchangerate-api.com`,
+      path: `/v6/${process.env.EXCHANGE_API_KEY}/pair/${from}/${to}`,
       method: "GET",
       headers: {
-        Authorization: `Bearer ${process.env.TOKEN}`,
-        "Content-Type": "application/json",
-        accept: "application/vnd.api+json"
+        Connection: "keep-alive"
       }
-    },
-    (res) => {
-      let responseData = "";
+    };
 
-      res.on("data", (chunk) => {
-        responseData += chunk;
+    const body = await new Promise((resolve, reject) => {
+      const req = https.request(options, (res) => {
+        let chunks = "";
+
+        res.on("data", (chunk) => {
+          chunks += chunk;
+        });
+
+        res.on("end", () => {
+          resolve(JSON.parse(chunks));
+        });
       });
 
-      res.on("end", () => {
-        console.log("Response:", JSON.parse(responseData));
+      req.on("error", (error) => {
+        reject(error);
       });
-    }
-  );
+
+      req.end();
+    });
+
+    return body;
+  } catch (error) {
+    console.log(error);
+    return null;
+  }
 };
+
+module.exports = { currencyExchange };
