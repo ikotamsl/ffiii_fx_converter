@@ -1,8 +1,14 @@
 FROM node:lts-alpine
 
-WORKDIR /
+RUN mkdir /app
 
-COPY . .
+COPY . /app
+
+WORKDIR /app
+
+RUN pwd
+
+VOLUME /app
 
 RUN npm i
 
