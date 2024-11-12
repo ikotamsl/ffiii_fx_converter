@@ -1,25 +1,37 @@
 require("dotenv").config();
 var express = require("express");
 var router = express.Router();
+
+const debug = require("debug");
+
+mainLog = debug("process:main");
+
 const https = require("https");
 const { DateTime } = require("luxon");
 const currency = require("../public/javascripts/currency");
 
 /* POST Firefly III Webhook. */
 router.post("/", async function (req, res) {
+  mainLog(req.body.content.transactions[0]);
+
   try {
     switch (req.body.content.transactions[0].currency_code) {
       case `UZS`:
         break;
 
       default:
+        if (req.body.content.transactions[0].type !== "withdrawal") {
+          console.log(`Transaction ${req.body.content.id} is not a Withdrawal`);
+          break;
+        }
+
         const exchangeResult = await currency
           .currencyExchange(
             req.body.content.transactions[0].currency_code,
             process.env.EXCHANGE_API_CORE_CURRENCY_CODE
           )
           .then((exchangeRes) => {
-            console.log(exchangeRes);
+            mainLog(exchangeRes);
 
             if (req.body.content) {
               const options = {
@@ -41,7 +53,7 @@ router.post("/", async function (req, res) {
                 transactions: [
                   {
                     type: "withdrawal",
-                    date: `${DateTime.now().toISO()}`,
+                    date: `${req.body.content.transactions[0].date}`,
                     amount: `${
                       exchangeRes.conversion_rate
                         ? req.body.content.transactions[0].amount *
@@ -64,7 +76,7 @@ router.post("/", async function (req, res) {
                 });
 
                 res.on("end", () => {
-                  console.log("Response:", JSON.parse(responseData));
+                  mainLog(`Created tx:`, JSON.parse(responseData));
                 });
               });
 
@@ -104,7 +116,7 @@ router.post("/", async function (req, res) {
                   });
 
                   res.on("end", () => {
-                    console.log("Update:", JSON.parse(responseData));
+                    mainLog(`Updated tx:`, JSON.parse(responseData));
                   });
                 }
               );
