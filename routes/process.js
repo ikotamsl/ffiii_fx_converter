@@ -52,6 +52,13 @@ router.post('/', async function (req, res) {
 														.transactions[0]
 														.foreign_amount
 										}`,
+
+										/*
+										TODO
+										
+										Make a description in a Markdown format, that will include the link to the original transaction
+										and details about the transaction
+										*/ 
 										description: `Budgeting in core currency`,
 										budget_id: `${req.body.content.transactions[0].budget_id}`,
 										source_id: `${process.env.SOURCE_ID}`,
